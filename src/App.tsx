@@ -6,45 +6,45 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchPoetry = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        // 第一步：获取token
-        let token = localStorage.getItem('token')
-        if (!token) {
-          const tokenResponse = await fetch('https://v2.jinrishici.com/token')
-          const tokenData: TokenResponse = await tokenResponse.json()
-          if (tokenData.status !== 'success') {
-            throw new Error('获取token失败')
-          }
-          token = tokenData.data
-          localStorage.setItem('token', token);
+  const fetchPoetry = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // 第一步：获取token
+      let token = localStorage.getItem('token')
+      if (!token) {
+        const tokenResponse = await fetch('https://v2.jinrishici.com/token')
+        const tokenData: TokenResponse = await tokenResponse.json()
+        if (tokenData.status !== 'success') {
+          throw new Error('获取token失败')
         }
-        
-        // 第二步：使用token获取诗词
-        const sentenceResponse = await fetch('https://v2.jinrishici.com/sentence', {
-          headers: {
-            'X-User-Token': token
-          }
-        })
-        
-        const sentenceData: SentenceResponse = await sentenceResponse.json()
-        
-        if (sentenceData.status !== 'success') {
-          throw new Error('获取诗词失败')
-        }
-        
-        setPoetry(sentenceData.data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '未知错误')
-      } finally {
-        setLoading(false)
+        token = tokenData.data
+        localStorage.setItem('token', token);
       }
+      
+      // 第二步：使用token获取诗词
+      const sentenceResponse = await fetch('https://v2.jinrishici.com/sentence', {
+        headers: {
+          'X-User-Token': token
+        }
+      })
+      
+      const sentenceData: SentenceResponse = await sentenceResponse.json()
+      
+      if (sentenceData.status !== 'success') {
+        throw new Error('获取诗词失败')
+      }
+      
+      setPoetry(sentenceData.data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '未知错误')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchPoetry()
   }, [])
 
@@ -72,10 +72,23 @@ function App() {
     )
   }
 
+  const handleRefresh = () => {
+    fetchPoetry()
+  }
+
   return (
     <div className="container">
       <div className="poetry-card">
-        <h1 className="title">今日诗词推荐</h1>
+        <div className="header">
+          <h1 className="title">今日诗词推荐</h1>
+          <button 
+            className="refresh-button" 
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            {loading ? '加载中...' : '换一首'}
+          </button>
+        </div>
         
         <div className="today-sentence">
           <div className="sentence-content">{poetry.content}</div>
