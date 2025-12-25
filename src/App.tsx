@@ -1,34 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-interface PoetryData {
-  id: string
-  content: string
-  popularity: number
-  origin: {
-    title: string
-    dynasty: string
-    author: string
-    content: string[]
-    translate: string[]
-  }
-  matchTags: string[]
-  recommendedReason: string
-  cacheAt: string
-  token: string
-  ipAddress: string
-}
-
-interface TokenResponse {
-  status: string
-  data: string
-}
-
-interface SentenceResponse {
-  status: string
-  data: PoetryData
-}
-
 function App() {
   const [poetry, setPoetry] = useState<PoetryData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -41,14 +13,16 @@ function App() {
         setError(null)
         
         // 第一步：获取token
-        const tokenResponse = await fetch('https://v2.jinrishici.com/token')
-        const tokenData: TokenResponse = await tokenResponse.json()
-        
-        if (tokenData.status !== 'success') {
-          throw new Error('获取token失败')
+        let token = localStorage.getItem('token')
+        if (!token) {
+          const tokenResponse = await fetch('https://v2.jinrishici.com/token')
+          const tokenData: TokenResponse = await tokenResponse.json()
+          if (tokenData.status !== 'success') {
+            throw new Error('获取token失败')
+          }
+          token = tokenData.data
+          localStorage.setItem('token', token);
         }
-        
-        const token = tokenData.data
         
         // 第二步：使用token获取诗词
         const sentenceResponse = await fetch('https://v2.jinrishici.com/sentence', {
