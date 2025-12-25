@@ -5,10 +5,15 @@ function App() {
   const [poetry, setPoetry] = useState<PoetryData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const fetchPoetry = async () => {
+  const fetchPoetry = async (isRefresh = false) => {
     try {
-      setLoading(true)
+      if (!isRefresh) {
+        setLoading(true)
+      } else {
+        setIsRefreshing(true)
+      }
       setError(null)
       
       // 第一步：获取token
@@ -36,11 +41,18 @@ function App() {
         throw new Error('获取诗词失败')
       }
       
-      setPoetry(sentenceData.data)
+      // 使用setTimeout确保UI有足够时间更新
+      setTimeout(() => {
+        setPoetry(sentenceData.data)
+      }, 50)
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误')
     } finally {
-      setLoading(false)
+      if (!isRefresh) {
+        setLoading(false)
+      } else {
+        setIsRefreshing(false)
+      }
     }
   }
 
@@ -48,7 +60,7 @@ function App() {
     fetchPoetry()
   }, [])
 
-  if (loading) {
+  if (loading && !isRefreshing) {
     return (
       <div className="container">
         <div className="loading">正在加载今日诗词...</div>
@@ -73,12 +85,12 @@ function App() {
   }
 
   const handleRefresh = () => {
-    fetchPoetry()
+    fetchPoetry(true)
   }
 
   return (
     <div className="container">
-      <div className="poetry-card">
+      <div className={`poetry-card ${isRefreshing ? 'refreshing' : ''}`}>
         <div className="header">
           <h1 className="title">今日诗词推荐</h1>
           <button 
